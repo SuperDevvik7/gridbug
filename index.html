@@ -160,6 +160,42 @@ main{flex:1;overflow:hidden;position:relative;background:var(--bg)}
 .zoom-btn:hover{background:rgba(110,142,251,.2);color:#fff}
 .hint{position:absolute;bottom:20px;left:20px;font-size:11px;color:var(--muted);opacity:.4;z-index:10;pointer-events:none;display:none}
 .hint.visible{display:block}
+
+/* MOBILE (portrait phone) */
+@media(max-width:700px){
+  header{padding:0 14px;gap:10px;height:48px;flex-wrap:wrap}
+  header h1{font-size:14px}
+  .logo-icon{width:24px;height:24px;border-radius:6px}
+  .logo-icon svg{width:13px;height:13px}
+  .tabs{margin-left:0;padding:2px;gap:1px}
+  .tab{padding:5px 10px;font-size:11px}
+
+  .team-page{padding:24px 10px;justify-content:flex-start}
+  .team-title h2{font-size:28px}
+  .team-title p{font-size:12px}
+  .team-grid{gap:24px;padding:20px 10px}
+  .member-photo{width:100px}
+  .member-photo::after{inset:-18px;filter:blur(18px)}
+  .member-name{font-size:12px}
+
+  .about-page{padding:28px 16px 60px}
+  .about-hero{margin-bottom:28px}
+  .about-hero h2{font-size:30px}
+  .about-hero .tagline{font-size:14px}
+  .about-content{gap:32px}
+  .about-section{flex-direction:column;gap:20px}
+  .about-section.reverse{flex-direction:column}
+  .about-gallery{flex:none;width:100%}
+  .about-gallery.single img{height:auto;width:100%}
+  .about-text h3{font-size:18px}
+  .about-text p{font-size:13px}
+  .about-specs{grid-template-columns:repeat(2,1fr);gap:10px}
+  .spec-card{padding:14px}
+  .spec-card .spec-val{font-size:20px}
+  .spec-card .spec-label{font-size:10px}
+
+  .diagram-panel img{width:auto;height:100%}
+}
 </style>
 </head>
 <body>
