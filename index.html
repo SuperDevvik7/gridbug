@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridBug — Datapath &amp; FSM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06060f;--surface:#0e0e1e;--border:#22224a;
+  --text:#d8d8f0;--muted:#6a6a90;--accent:#6e8efb;--accent2:#a777e3;
+}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh}
+header{
+  display:flex;align-items:center;gap:20px;padding:0 32px;height:54px;
+  background:linear-gradient(180deg,rgba(14,14,34,.97),rgba(10,10,24,.99));
+  border-bottom:1px solid rgba(110,142,251,.1);
+  backdrop-filter:blur(14px);flex-shrink:0;position:relative;z-index:20;
+}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(110,142,251,.2),rgba(167,119,227,.2),transparent)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:16px;height:16px}
+header h1{font-size:16px;font-weight:700;letter-spacing:-.2px;background:linear-gradient(135deg,#fff,#c0c8f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tabs{display:flex;gap:2px;margin-left:24px;background:rgba(255,255,255,.04);border-radius:10px;padding:3px}
+.tab{padding:7px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all .25s;user-select:none;border:1px solid transparent}
+.tab:hover{color:var(--text)}
+.tab.active{background:rgba(110,142,251,.15);color:#fff;border-color:rgba(110,142,251,.2);box-shadow:0 0 12px rgba(110,142,251,.1)}
+
+main{flex:1;overflow:hidden;position:relative;background:var(--bg)}
+.panel{display:none;width:100%;height:100%;overflow:auto;position:relative}
+.panel.active{display:flex}
+
+/* ABOUT PAGE */
+.about-page{
+  flex-direction:column;align-items:center;padding:50px 40px 80px;gap:0;
+  background:radial-gradient(ellipse at 50% 20%,rgba(20,15,50,.6),var(--bg) 65%);
+}
+.about-hero{text-align:center;max-width:700px;margin-bottom:48px}
+.about-hero h2{
+  font-size:48px;font-weight:800;letter-spacing:-1.5px;line-height:1.1;
+  background:linear-gradient(135deg,#ffcc00 0%,#ff6600 50%,#ff3366 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:16px;
+}
+.about-hero .tagline{
+  font-size:18px;color:#9898c0;font-weight:400;line-height:1.6;
+}
+.about-hero .tagline strong{color:#c8c8f0}
+.about-content{max-width:960px;width:100%;display:flex;flex-direction:column;gap:56px}
+.about-section{display:flex;gap:48px;align-items:center}
+.about-section.reverse{flex-direction:row-reverse}
+.about-text{flex:1;min-width:0}
+.about-text h3{
+  font-size:22px;font-weight:700;margin-bottom:12px;letter-spacing:-.3px;
+  color:#e0e0f8;
+}
+.about-text p{font-size:14.5px;line-height:1.75;color:#9898b8}
+.about-text p+p{margin-top:10px}
+.about-text .highlight{
+  display:inline-block;padding:3px 10px;border-radius:6px;font-weight:600;font-size:13px;
+  background:rgba(110,142,251,.12);color:var(--accent);border:1px solid rgba(110,142,251,.15);
+  margin-bottom:10px;
+}
+.about-gallery{
+  flex:0 0 320px;display:flex;gap:12px;
+}
+.about-gallery img{
+  width:100%;border-radius:14px;object-fit:cover;
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  transition:transform .3s;
+}
+.about-gallery img:hover{transform:scale(1.03)}
+.about-gallery.stack{flex-direction:column}
+.about-gallery.stack img{height:200px}
+.about-gallery.single img{height:380px}
+.about-divider{
+  width:80px;height:2px;border-radius:1px;margin:0 auto;
+  background:linear-gradient(90deg,transparent,rgba(110,142,251,.3),rgba(167,119,227,.3),transparent);
+}
+.about-specs{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px;
+}
+.spec-card{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;padding:20px;text-align:center;transition:border-color .3s;
+}
+.spec-card:hover{border-color:rgba(110,142,251,.25)}
+.spec-card .spec-val{font-size:26px;font-weight:800;color:#e8e8ff;letter-spacing:-.5px}
+.spec-card .spec-label{font-size:11.5px;color:var(--muted);margin-top:4px;letter-spacing:.3px;text-transform:uppercase}
+
+/* TEAM PAGE */
+.team-page{
+  flex-direction:column;align-items:center;justify-content:center;gap:0;
+  background:radial-gradient(ellipse at 50% 40%,rgba(30,20,60,.5),var(--bg) 70%);
+}
+.team-title{text-align:center;margin-bottom:8px}
+.team-title h2{
+  font-size:42px;font-weight:800;letter-spacing:-1px;
+  background:linear-gradient(135deg,#fff 0%,#a0b0ff 40%,#c088f0 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.team-title p{font-size:14px;color:var(--muted);margin-top:6px;letter-spacing:.5px}
+.team-grid{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:40px;
+  padding:32px 40px 40px;max-width:1100px;
+}
+.member{display:flex;flex-direction:column;align-items:center;gap:14px;transition:transform .3s}
+.member:hover{transform:translateY(-6px)}
+.member-photo{
+  position:relative;width:150px;aspect-ratio:1/1;border-radius:50%;
+  display:grid;place-items:center;isolation:isolate;
+}
+.member-photo::before{
+  content:"";position:absolute;inset:-3px;border-radius:50%;
+  border:2.5px solid transparent;
+  background:conic-gradient(#7a00ff,#00d4ff,#2b6cff,#7a00ff) border-box;
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3.5px),#000 calc(100% - 3.5px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 3.5px),#000 calc(100% - 3.5px));
+  animation:spin 3.5s linear infinite;z-index:1;
+}
+.member-photo::after{
+  content:"";position:absolute;inset:-28px;border-radius:50%;
+  background:conic-gradient(#7a00ff,#00d4ff,#2b6cff,#7a00ff);
+  filter:blur(28px);opacity:.45;
+  animation:spin 5.5s linear infinite reverse;z-index:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.member-photo::before,.member-photo::after{animation:none}}
+.member-photo img{
+  width:100%;height:100%;object-fit:cover;border-radius:50%;
+  position:relative;z-index:2;border:2px solid rgba(255,255,255,.1);
+}
+.member-name{
+  font-size:14px;font-weight:600;color:#c8c8e8;text-align:center;
+  letter-spacing:.2px;
+}
+
+/* DIAGRAM PANELS */
+.diagram-panel{cursor:grab;justify-content:center;align-items:flex-start}
+.diagram-panel.dragging{cursor:grabbing}
+.diagram-panel img{
+  display:block;width:100%;height:auto;transform-origin:0 0;
+  transition:transform .1s ease-out;image-rendering:auto;
+}
+.zoom-controls{
+  position:absolute;bottom:20px;right:20px;display:none;flex-direction:column;gap:4px;z-index:10;
+  background:rgba(14,14,34,.85);border-radius:12px;padding:5px;border:1px solid var(--border);backdrop-filter:blur(10px);
+}
+.zoom-controls.visible{display:flex}
+.zoom-btn{
+  width:36px;height:36px;border-radius:8px;border:none;
+  background:transparent;color:var(--text);font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:.2s;font-family:'Inter',sans-serif;
+}
+.zoom-btn:hover{background:rgba(110,142,251,.2);color:#fff}
+.hint{position:absolute;bottom:20px;left:20px;font-size:11px;color:var(--muted);opacity:.4;z-index:10;pointer-events:none;display:none}
+.hint.visible{display:block}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <h1>GridBug</h1>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-tab="team">Team</div>
+    <div class="tab" data-tab="about">About</div>
+    <div class="tab" data-tab="datapath">Datapath</div>
+    <div class="tab" data-tab="fsm">FSM</div>
+  </div>
+</header>
+
+<main>
+  <!-- TEAM PAGE -->
+  <div class="panel team-page active" id="panel-team">
+    <div class="team-title">
+      <h2>GridBug</h2>
+      <p>Meet the team</p>
+    </div>
+    <div class="team-grid">
+      <div class="member">
+        <div class="member-photo"><img src="devvik.jpeg" alt="Devvik Agarwal"></div>
+        <div class="member-name">Devvik Agarwal</div>
+      </div>
+      <div class="member">
+        <div class="member-photo"><img src="jiahan.jpeg" alt="Kia Jia Han"></div>
+        <div class="member-name">Kia Jia Han</div>
+      </div>
+      <div class="member">
+        <div class="member-photo"><img src="zhaoyuen.jpeg" alt="Wong Zhao Yuen"></div>
+        <div class="member-name">Wong Zhao Yuen</div>
+      </div>
+      <div class="member">
+        <div class="member-photo"><img src="yanning.jpeg" alt="Tan Yan Ning"></div>
+        <div class="member-name">Tan Yan Ning</div>
+      </div>
+      <div class="member">
+        <div class="member-photo"><img src="sammi.jpeg" alt="Sammi Tan"></div>
+        <div class="member-name">Sammi Tan</div>
+      </div>
+      <div class="member">
+        <div class="member-photo"><img src="skylar.jpeg" alt="Skylar Looi Yuxun"></div>
+        <div class="member-name">Skylar Looi Yuxun</div>
+      </div>
+      <div class="member">
+        <div class="member-photo"><img src="dongyue.jpeg" alt="Goh Dong Yue"></div>
+        <div class="member-name">Goh Dong Yue</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="panel about-page" id="panel-about">
+    <div class="about-hero">
+      <h2>GridBug</h2>
+      <p class="tagline">
+        A <strong>two-player arcade maze game</strong> built from the ground up on an FPGA, 
+        rendered on a 32&times;32 RGB LED matrix and housed in a handcrafted cardboard arcade cabinet.
+      </p>
+    </div>
+    <div class="about-content">
+
+      <div class="about-section">
+        <div class="about-text">
+          <span class="highlight">The Game</span>
+          <h3>Collect. Evade. Survive.</h3>
+          <p>
+            GridBug is a Pac-Man inspired head-to-head duel. <strong>Player 1</strong> races through a maze 
+            trying to collect every pellet on the board. <strong>Player 2</strong> has one job &mdash; catch Player 1 
+            before all the pellets are gone.
+          </p>
+          <p>
+            If Player 1 clears the board, they win. If Player 2 catches Player 1 by overlapping 
+            their position, Player 2 wins. It's a tense game of cat and mouse on a tiny glowing grid.
+          </p>
+        </div>
+        <div class="about-gallery single">
+          <img src="arcade1.png" alt="GridBug arcade cabinet showing maze gameplay">
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <div class="about-section reverse">
+        <div class="about-text">
+          <span class="highlight">The Hardware</span>
+          <h3>FPGA-Powered Arcade</h3>
+          <p>
+            The entire game runs on an <strong>Alchitry Au FPGA</strong> programmed in Lucid HDL. 
+            There is no software, no CPU, no operating system &mdash; just raw digital logic 
+            executing every game tick in a single clock cycle at 100 MHz.
+          </p>
+          <p>
+            The display is a 32&times;32 HUB75 RGB LED matrix driven by a custom matrix driver. 
+            Player inputs come from arcade-style push buttons with edge detection. 
+            The whole thing sits inside a hand-built arcade cabinet complete with 
+            a &ldquo;Insert Token Here&rdquo; slot and Pac-Man artwork.
+          </p>
+        </div>
+        <div class="about-gallery single">
+          <img src="arcade2.png" alt="GridBug showing YOU WIN screen in red">
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <div class="about-section">
+        <div class="about-text">
+          <span class="highlight">Under the Hood</span>
+          <h3>Custom Datapath &amp; FSM</h3>
+          <p>
+            The game logic is entirely combinational &mdash; every button press triggers a full pipeline of 
+            position computation, boundary checks, wall collision detection, pellet intersection, 
+            win condition evaluation, and state updates, all within a single clock edge.
+          </p>
+          <p>
+            A separate registered FSM handles pixel rendering, sweeping through all 1024 pixels 
+            to write the correct colour (player, wall, pellet, or background) into a dual-port RAM 
+            that feeds the LED matrix driver continuously.
+          </p>
+        </div>
+        <div class="about-gallery single">
+          <img src="arcade3.png" alt="GridBug showing YOU WIN screen in green">
+        </div>
+      </div>
+
+      <div class="about-divider"></div>
+
+      <div class="about-specs">
+        <div class="spec-card"><div class="spec-val">100 MHz</div><div class="spec-label">Clock Speed</div></div>
+        <div class="spec-card"><div class="spec-val">32&times;32</div><div class="spec-label">LED Matrix</div></div>
+        <div class="spec-card"><div class="spec-val">1024</div><div class="spec-label">Pixels Rendered</div></div>
+        <div class="spec-card"><div class="spec-val">2</div><div class="spec-label">Players</div></div>
+        <div class="spec-card"><div class="spec-val">16</div><div class="spec-label">Registers</div></div>
+        <div class="spec-card"><div class="spec-val">HUB75</div><div class="spec-label">Display Protocol</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DATAPATH -->
+  <div class="panel diagram-panel" id="panel-datapath">
+    <img id="img-datapath" src="datapath.png" alt="Datapath Diagram" draggable="false">
+  </div>
+
+  <!-- FSM -->
+  <div class="panel diagram-panel" id="panel-fsm">
+    <img id="img-fsm" src="fsm.png" alt="FSM Diagram" draggable="false">
+  </div>
+
+  <div class="zoom-controls" id="zoom-controls">
+    <button class="zoom-btn" id="zoom-in" title="Zoom In">+</button>
+    <button class="zoom-btn" id="zoom-out" title="Zoom Out">&minus;</button>
+    <button class="zoom-btn" id="zoom-reset" title="Reset">&#8634;</button>
+  </div>
+  <div class="hint" id="hint">Scroll to zoom &middot; Drag to pan</div>
+</main>
+</div>
+
+<script>
+const tabs=document.querySelectorAll('.tab');
+const panels=document.querySelectorAll('.panel');
+const zoomCtrl=document.getElementById('zoom-controls');
+const hint=document.getElementById('hint');
+
+tabs.forEach(tab=>{
+  tab.onclick=()=>{
+    tabs.forEach(t=>t.classList.remove('active'));
+    panels.forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+    const isDiagram=tab.dataset.tab==='datapath'||tab.dataset.tab==='fsm';
+    zoomCtrl.classList.toggle('visible',isDiagram);
+    hint.classList.toggle('visible',isDiagram);
+    if(!isDiagram){state.z=1;state.x=0;state.y=0;applyTransform()}
+  };
+});
+
+const state={z:1,x:0,y:0,dragging:false,sx:0,sy:0,ox:0,oy:0};
+
+function applyTransform(){
+  document.querySelectorAll('.diagram-panel img').forEach(img=>{
+    img.style.transform=`translate(${state.x}px,${state.y}px) scale(${state.z})`;
+  });
+}
+
+document.getElementById('zoom-in').onclick=()=>{state.z=Math.min(5,state.z+.2);applyTransform()};
+document.getElementById('zoom-out').onclick=()=>{state.z=Math.max(1,state.z-.2);applyTransform()};
+document.getElementById('zoom-reset').onclick=()=>{state.z=1;state.x=0;state.y=0;applyTransform()};
+
+document.querySelectorAll('.diagram-panel').forEach(panel=>{
+  panel.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const d=e.deltaY>0?-.08:.08;
+    state.z=Math.max(1,Math.min(5,state.z+d));
+    applyTransform();
+  },{passive:false});
+  panel.addEventListener('mousedown',e=>{
+    state.dragging=true;state.sx=e.clientX;state.sy=e.clientY;
+    state.ox=state.x;state.oy=state.y;
+    panel.classList.add('dragging');
+  });
+});
+
+document.addEventListener('mousemove',e=>{
+  if(!state.dragging)return;
+  state.x=state.ox+(e.clientX-state.sx);
+  state.y=state.oy+(e.clientY-state.sy);
+  applyTransform();
+});
+document.addEventListener('mouseup',()=>{
+  state.dragging=false;
+  document.querySelectorAll('.diagram-panel').forEach(p=>p.classList.remove('dragging'));
+});
+</script>
+</body>
+</html>
